@@ -1,0 +1,145 @@
+---
+title: "Latihan_2.6"
+author: "ArielaSafmi"
+date: "2025-04-21"
+output: pdf_document
+---
+👨 DATA PRESIDENT 👨
+```{r}
+📚DESKRIPSI 
+Dataset ini merupakan data rating persetujuan publik (approval rating) terhadap Presiden Amerika
+Serikat dari tahun 1945 sampai dengan 1974, direkap tiap kuartal (setiap 3 bulan). Jadi totalnya ada 120
+nilai dalam bentuk time series.
+Pada nilai approval ini menunjukan bahwa seberapa banyak orang yang “setuju” atau mendukung
+kinerja Presiden tersebut. Angkanya memakai persentase (%), menunjukan bahwa semakin tinggi
+berrarti semakin banyak yang setuju. 
+```
+```{r}
+📊 FORMAT Data
+•	Tipe data: Time series
+•	Panjang data: 120 nilai, dengan keterangan berikut 
+Data yang terkumpul tiap kuartal mulai dari tahun 1945 sampai dengan 1974. Jadi dalam 1 tahun terdapat 4 kuartal (Q1, Q2, Q3, Q4) dengan waktu 30 tahun. Jadi ddalam 30 tahun * 4 kuartal per tahun adalah 120 poin. 
+•	Satuan: Persentase (%) persetujuan publik terhadap kinerja Presiden 
+```
+```{r}
+📁 KOMPONEN DATA 
+1.	Judul Grafik 
+Judul grafik adalah “presidents data” 
+2.	Waktu (Time) 
+Sumbu X menunjukkan keterangan waktu, yang dimulai dari tahun 1945 hingga kisaran 1975. Hal tersebut menunjukan bahwa data ini merupakan salah satu data deret waktu (time series) 
+3.	Approval Rating (%)
+Sumbu X menunjukan persentase approval rating, yaitu tingkat persetujuan public terhadap kinerja presiden. Rentangnya menunjukan dari sekitar 25% hingga 90%.
+4.	Nilai Approval Rating 
+Setiap titik pada grafik adalah approval rating bulanan, data ini merupakan time series kuartalan (setiap 3 bulan) 
+5.	Label Sumbu 
+•	Sumbu Y berjudul “approval rating” (%), letaknya dibagian kiri 
+•	Sumbu X berjudul “Time”, karena merupakan data time series, letaknya di bagian bawah tahun 
+```
+```{r setup, include=FALSE}
+plot(presidents)
+```
+```{r}
+help("presidents")
+```
+```{r}
+#Mengakses pustaka dataset
+library(datasets)
+#Memeriksa bantuan dataset
+help("datasets")
+#Membuat plotting analisis deret waktu
+plot(presidents,
+     main = "Approval Rating Presidents (1945 - 1975)",
+     xlab = "time",
+     ylab = "Approval Rating",
+     col  = "pink")
+lines(lowess(presidents), col="purple", lwd=2)
+```
+📌 POLA YANG TERLIHAT 
+1.	Awal 1940-an: Approval rating sangat tinggi (85%), kemungkinan karena efek patriotisme pada masa Perang Dunia II.
+2.	Akhir 1940-an – awal 1950-an: Terjadi penurunan tajam hingga di bawah 30%. Ini bisa dikaitkan dengan masa pasca perang, atau ketidakpuasan publik terhadap kepemimpinan.
+3.	Pertengahan 1950–1960: Terjadi kenaikan stabil dengan puncak sekitar tahun 1956–1960, menunjukkan masa yang relatif stabil dan positif bagi Presiden saat itu 
+4.	1960–1965: Fluktuasi terjadi, mungkin akibat dari perubahan kepemimpinan (John F. Kennedy) dan beberapa ketegangan politik.
+5.	1965–1974: Tren menunjukkan penurunan bertahap hingga sangat rendah (25%) di akhir grafik.
+```{r}
+install.packages("zoo")
+library(zoo)
+```
+```{r}
+dekom_stl<- stl(pres, s.window = "periodic")
+plot((dekom_stl))
+```
+```{r}
+📌INTERPRETASI
+1. Data awal (panel 1) 
+Pada data tersebut telah terjadi fluktuasi pada tahun 1950-an hingga awal 1960-an. Dari data tersebut terlihat bahwa titik tertinggi pada awal 1950-an dan awal 1960-an, akan tetapi mengalami penurunan drastis mendekati tahun 1974.
+2. Data musiman (panel 2)
+Terlihat adanya pola naik turun yang sangat konsisten tiap tahunnya, nilainya kisaran -2 hingga +2 poin. Hal itu menunjukan bahwa approval rating cenderung mengikuti pola musiman faktornya bisa berupa peristiwa tahunan seperti pidato kenegaraan, pemilu.
+3. Data trend (Panel 3)
+Mulai terjadinya penurunan drastis di awal periode akibat adanya Perang Dunia II, kemudian naik secara signifikan di pertengahan 1950-an pada era Eisenhower. Namun setelah tahun 1965 terjadi lagi penurunan perlahan hingga akhir periode.
+4. Data Remainder (panel 4)
+Terjadinya lonjakan ekstrem ke atas atau ke bawah, faktornya antara lain krisis lingkungan, skandal, dan peristiwa luar biasa.
+```
+```{r}
+stl_df <- data.frame(
+  time = time(pres),
+  data = as.numeric(pres),
+  trend = as.numeric(dekom_stl$time.series[, "trend"]),
+  seasonal = as.numeric(dekom_stl$time.series[, "seasonal"]),
+  remainder = as.numeric(dekom_stl$time.series[, "remainder"])
+)
+library(ggplot2)
+
+ggplot(stl_df, aes(x = time)) +
+  geom_line(aes(y = data), color = "pink") +
+  geom_line(aes(y = trend), color = "purple") +
+  geom_line(aes(y = seasonal), color = "magenta") +
+  labs(title = "Decomposition of Presidents' Approval Ratings",
+       x = "Time", y = "Rating") +
+  theme_minimal()
+```
+```{r}
+#ANALISIS KOMPONEN TREND 
+ggplot(stl_df, aes(x = time, y = trend)) +
+  geom_line(color = "magenta", size = 1.2) +
+  labs(title = "Tren Approval Rating Presiden AS (1945–1974)",
+       x = "Tahun",
+       y = "Approval Rating (Tren)") +
+  theme_minimal()
+```
+```{r}
+#ANALISIS KOMPONEN MUSIMAN
+ggplot(stl_df, aes(x = time, y = seasonal)) +
+  geom_line(color = "lightpink", size = 1.2) +
+  labs(title = "Pola Musiman dalam Approval Rating",
+       x = "Tahun",
+       y = "Komponen Musiman") +
+  theme_minimal()
+```
+```{r}
+#ANALISIS KOMPONEN REMAINDER 
+ggplot(stl_df, aes(x = time, y = remainder)) +
+  geom_line(color = "purple", size = 1) +
+  labs(title = "Komponen Remainder (Fluktuasi Acak)",
+       x = "Tahun",
+       y = "Remainder") +
+  theme_minimal()
+```
+```{r}
+library(tidyr)
+library(dplyr)
+
+# Ubah data menjadi long format
+stl_long <- stl_df %>%
+  select(time, trend, seasonal, remainder) %>%
+  pivot_longer(-time, names_to = "Komponen", values_to = "Nilai")
+
+# Plot 3 panel
+ggplot(stl_long, aes(x = time, y = Nilai)) +
+  geom_line(color = "steelblue") +
+  facet_wrap(~ Komponen, scales = "free_y", ncol = 1) +
+  labs(title = "Dekomposisi Approval Rating Presiden AS",
+       x = "Tahun",
+       y = "Nilai") +
+  theme_minimal(base_size = 13)
+```
+
